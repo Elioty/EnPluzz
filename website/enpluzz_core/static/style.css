@@ -1,0 +1,102 @@
+/*
+ * EnPluzz
+ * Copyright (C) 2025  Elioty <roadkiller.cl@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+:root {
+    --bs-body-bg: rgb(35, 41, 59);
+    --bs-body-color: white;
+
+    --bs-tertiary-bg-rgb: 25, 27, 66;
+}
+
+.navbar {
+    --bs-navbar-brand-color: white;
+    --bs-navbar-brand-color: white;
+    --bs-navbar-color: white;
+    --bs-navbar-brand-hover-color: #c0c0c0;
+    --bs-navbar-hover-color: #c0c0c0;
+}
+
+body header {
+    margin-bottom: 1.2rem;
+}
+
+body footer {
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+    & a {
+        color: #b6dcff;
+    }
+}
+
+.card-box {
+    padding: 0.2rem;
+    margin: 0.2rem;
+    overflow-wrap: break-word;
+    border-radius: 10px;
+    border: ridge 3px #bbbbbb;
+}
+
+.card-box.purple {
+    border-color: #f976f8;
+}
+
+.card-box.yellow {
+    border-color: #eede46;
+}
+
+.card-box.blue {
+    border-color: #42aeff;
+}
+
+.card-box.green {
+    border-color: #23f31a;
+}
+
+.card-box.red {
+    border-color: #bb2823;
+}
+
+img.portrait {
+    border-radius: 7px;
+    border: ridge 3px #bbbbbb;
+    background-image: linear-gradient(180deg, #dddddd, #333333);
+}
+
+img.portrait.purple {
+    border-color: #f976f8;
+    background-image: linear-gradient(180deg, #874086, #331833);
+}
+
+img.portrait.yellow {
+    border-color: #eede46;
+    background-image: linear-gradient(180deg, #69621f, #302d0e);
+}
+
+img.portrait.blue {
+    border-color: #42aeff;
+    background-image: linear-gradient(180deg, #245f8a, #0f2738);
+}
+
+img.portrait.green {
+    border-color: #23f31a;
+    background-image: linear-gradient(180deg, #13830e, #073205);
+}
+
+img.portrait.red {
+    border-color: #bb2823;
+    background-image: linear-gradient(180deg, #8a1d19, #380c0a);
+}

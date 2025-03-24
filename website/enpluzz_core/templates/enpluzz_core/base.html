@@ -1,0 +1,78 @@
+{% comment %}
+EnPluzz
+Copyright (C) 2025  Elioty <roadkiller.cl@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block page_title %}EnPluzz{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="{% static 'style.css' %}" rel="stylesheet">
+  </head>
+  <body>
+    <header class="sticky-top bg-body-tertiary">
+      <nav class="navbar navbar-expand-lg container-xxl">
+        <div class="container">
+          <a class="navbar-brand" href="{% url 'index' %}">EnPluzz</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+              <a class="nav-link" href="{% url 'enpluzz_heroes:index' %}">Heroes</a>
+              <a class="nav-link" href="#">Troops</a>
+              <a class="nav-link" href="#">Items</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+    {% block page_body %}{% endblock %}
+    <footer class="bg-body-tertiary">
+      <div class="container">
+        <div class="row">
+          <div class="col-12 col-sm-12 col-md-4">
+            <a class="mb-2" href="{% url 'index' %}">
+              <span class="fs-5">EnPluzz</span>
+            </a>
+            <ul class="list-unstyled small">
+              <li class="mb-2">Designed and built with all the love in the world by Elioty33 with the help of contributors.</li>
+              <li class="mb-2">None of the data you enter into EnPluzz website or through the application will be sold or used for any purposes other than the intended use of the site.</li>
+              <li class="mb-2">Currently v0.0.1.</li>
+            </ul>
+          </div>
+          <div class="col-12 col-sm-12 col-md-3 offset-md-1">
+            <h5>Links</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="{% url 'enpluzz_heroes:index' %}">Heroes</a></li>
+              <li class="mb-2"><a href="#">...</a></li>
+            </ul>
+          </div>
+          <div class="col-3 col-sm-12 col-md-3">
+            <h5>Community</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="https://forum.smallgiantgames.com/" target="_blank" rel="noopener">Official forums</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  </body>
+</html>

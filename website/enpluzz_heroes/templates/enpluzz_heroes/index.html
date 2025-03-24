@@ -1,0 +1,71 @@
+{% extends 'enpluzz_core/base.html' %}
+
+{% comment %}
+EnPluzz
+Copyright (C) 2025  Elioty <roadkiller.cl@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% load static %}
+{% load enpluzz_tags %}
+
+{% block page_body %}
+{% get_static_prefix as STATIC_PREFIX %}
+<div class="container">
+    {% if heroes %}
+        <p>{{ heroes|length }} heroes and costumes</p>
+        <div class="row">
+            {% for hero in heroes %}
+            <div class="col-6 col-sm-6 col-md-4 col-lg-4 col-xl-3 text-center p-0"><div class="card-box {{ hero.element_id|lower }}">
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-lg-4 col-xl-4">
+                        <a href="{% url 'enpluzz_heroes:hero' hero.id %}"><img src="{{ STATIC_PREFIX }}game_assets/{{ hero.sprite_name }}" alt="" class="img-fluid portrait {{ hero.element_id|lower }}"/></a>
+                        <br/>
+                        {% with ''|center:hero.rarity_id as range %}
+                        {% for _ in range %}<img src="{{ STATIC_PREFIX }}game_assets/misc/symbol_star_big_small.png" alt="" class="img-fluid" style="width: 15%"/>{% endfor %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-12 col-sm-12 col-lg-8 col-xl-8">
+                        <strong>
+                            {% enpLang hero.name_lang_key %}
+                            {% with hero.costume_index as index %}{% if index is not None and index > 0 %}
+                            C{{ index }}
+                            {% endif %}{% endwith %}
+                        </strong><br/>
+                        {% with hero.stats as stats %}
+                        <p style="text-align: right; margin-right: 0.5em">Power: {{ stats.3 }}</p>
+                        <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_atk.png" alt="" width="12%"/> {{ stats.0 }}
+                        <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_defense.png" alt="" width="12%"/> {{ stats.1 }}
+                        <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_health.png" alt="" width="12%"/> {{ stats.2 }}
+                        {% endwith %}
+                        <br/>
+                        {% if hero.class_type %}
+                        <img src="{{ STATIC_PREFIX }}game_assets/classes/{{ hero.class_type.enp_id|lower }}.png" alt="" width="9%"/>
+                        {% enpLang hero.class_type.name_lang_key %}
+                        <br/>
+                        {% endif %}
+                        {% if hero.family %}
+                        <img src="{{ STATIC_PREFIX }}game_assets/{{ hero.family.sprite_name }}" alt="" width="9%"/>
+                        {{ hero.family.name }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div></div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No heroes are available.</p>
+    {% endif %}
+</div>
+{% endblock %}
