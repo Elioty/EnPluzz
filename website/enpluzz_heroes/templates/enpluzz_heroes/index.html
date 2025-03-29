@@ -25,6 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <div class="container">
     {% if heroes %}
         <p>{{ heroes|length }} heroes and costumes</p>
+        {% comment %}
+        <!-- TODO: set up the actual filtering form -->
+        <p>{% for element in elements %}{{ element }}<br/>{% endfor %}</p>
+        <p>{% for rarity in rarities %}{{ rarity }}<br/>{% endfor %}</p>
+        <p>{% for family in families %}{{ family.enp_id }}<br/>{% endfor %}</p>
+        <p>{% for class_type in class_types %}{{ class_type }}<br/>{% endfor %}</p>
+        <p>{% for mana_speed in mana_speeds %}{{ mana_speed }}<br/>{% endfor %}</p>
+        {% endcomment %}
         <div class="row">
             {% for hero in heroes %}
             <div class="col-6 col-sm-6 col-md-4 col-lg-4 col-xl-3 text-center p-0"><div class="card-box {{ hero.element_id|lower }}">
@@ -44,7 +52,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             {% endif %}{% endwith %}
                         </strong><br/>
                         {% with hero.stats as stats %}
-                        <p style="text-align: right; margin-right: 0.5em">Power: {{ stats.3 }}</p>
+                        Power: {{ stats.3 }}<br/>
+                        Mana speed: {% enpLang hero.mana_speed.name_lang_key %}<br/>
                         <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_atk.png" alt="" width="12%"/> {{ stats.0 }}
                         <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_defense.png" alt="" width="12%"/> {{ stats.1 }}
                         <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_health.png" alt="" width="12%"/> {{ stats.2 }}

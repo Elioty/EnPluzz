@@ -220,14 +220,14 @@ class Hero(models.Model):
     origin       = ForeignKeyFromJson(Origin, json_field='origin', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
     trainer_type = ForeignKeyFromJson(TrainerType, json_field='trainerType', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
 
-    family = ForeignKeyFromJson(Family, json_field='family', to_field='enp_id', on_delete=models.PROTECT, null=True)
+    family = ForeignKeyFromJson(Family, json_field='family', to_field='enp_id', on_delete=models.PROTECT, null=True, related_name='heroes')
 
     class_type                = ForeignKeyFromJson(ClassType, json_field='classType', to_field='enp_id', on_delete=models.PROTECT, null=True)
     has_improved_talent_skill = BooleanFieldFromJson(json_field='hasImprovedTalentSkill', default=False)
 
     aether_gift   = ForeignKeyFromJson(AetherGifts, json_field='aetherGift', to_field='enp_id', on_delete=models.PROTECT, null=True)
 
-    mana_speed    = ForeignKeyFromJson(ManaSpeed, json_field='manaSpeedId', to_field='enp_id', on_delete=models.PROTECT, null=True)
+    mana_speed    = ForeignKeyFromJson(ManaSpeed, json_field='manaSpeedId', to_field='enp_id', on_delete=models.PROTECT, null=True, related_name='heroes')
 
     special_skill = ForeignKeyFromJson(SpecialSkill, json_field='specialId', to_field='enp_id', on_delete=models.PROTECT, null=True)
     # TODO: passive skills and costume passive skills

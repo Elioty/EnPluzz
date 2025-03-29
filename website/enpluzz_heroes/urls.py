@@ -13,12 +13,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.urls import path
+from django.urls import path, re_path
 
 from . import views
 
 app_name = 'enpluzz_heroes'
 urlpatterns = [
     path('', views.index, name='index'),
+    re_path(r'^s/(e:(?P<f_elements>[a-zA-Z,]+)/)?' \
+                '(r:(?P<f_rarities>[0-9,]+)/)?' \
+                '(f:(?P<f_families>[a-zA-Z,]+)/)?' \
+                '(c:(?P<f_class_types>[a-zA-Z,]+)/)?' \
+                '(b:(?P<f_emblems>[a-zA-Z,]+)/)?' \
+                '(m:(?P<f_mana_speeds>[a-zA-Z,]+)/)?' \
+                '(costume:(?P<f_costume>[YN])/)?$' \
+            , views.index, name='index'),
     path('h/<int:hero_id>', views.hero, name='hero')
 ]
