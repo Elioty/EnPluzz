@@ -21,4 +21,11 @@ register = template.Library()
 @register.simple_tag
 def enpLang(key, *args, **kwargs):
     #TODO: use the appropiate language
-    return settings.ENP_LANGUAGES['English'].get(key)
+    if kwargs:
+        return settings.ENP_LANGUAGES['English'].get('.'.join([key, *args]), kwargs)
+    else:
+        try:
+            sep_index = args.index('|')
+            return settings.ENP_LANGUAGES['English'].get('.'.join([key, *args[:sep_index]]), list(args[sep_index+1:]))
+        except ValueError:
+            return settings.ENP_LANGUAGES['English'].get('.'.join([key, *args]))

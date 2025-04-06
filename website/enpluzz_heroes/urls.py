@@ -20,13 +20,15 @@ from . import views
 app_name = 'enpluzz_heroes'
 urlpatterns = [
     path('', views.index, name='index'),
-    re_path(r'^s/(e:(?P<f_elements>[a-zA-Z,]+)/)?' \
-                '(r:(?P<f_rarities>[0-9,]+)/)?' \
-                '(f:(?P<f_families>[a-zA-Z,]+)/)?' \
-                '(c:(?P<f_class_types>[a-zA-Z,]+)/)?' \
-                '(b:(?P<f_emblems>[a-zA-Z,]+)/)?' \
-                '(m:(?P<f_mana_speeds>[a-zA-Z,]+)/)?' \
-                '(costume:(?P<f_costume>[YN])/)?$' \
-            , views.index, name='index'),
+    path('q/', views.query, name='query_post'),
+    re_path(r'^q/(?:e:(?P<f_elements>[a-zA-Z0-9,_]+)/)?' \
+                '(?:r:(?P<f_rarities>[0-9,]+)/)?' \
+                '(?:f:(?P<f_families>[a-zA-Z0-9,_]+)/)?' \
+                '(?:c:(?P<f_class_types>[a-zA-Z0-9,_]+)/)?' \
+                '(?:b:(?P<f_emblems>[a-zA-Z0-9,_]+)/)?' \
+                '(?:m:(?P<f_mana_speeds>[a-zA-Z0-9,_]+)/)?' \
+                '(?:costume:(?P<f_costume>[YN])/)?' \
+                '(?:s:(?P<f_sort>[a-zA-Z0-9,_]+)/)?$' \
+            , views.index, name='query'),
     path('h/<int:hero_id>', views.hero, name='hero')
 ]
