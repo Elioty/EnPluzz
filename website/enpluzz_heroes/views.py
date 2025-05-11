@@ -32,11 +32,10 @@ def index(request, f_elements=[], f_rarities=[], f_families=[], f_class_types=[]
                                  default='enp_id'
                              )).values_list('fam_id', flat=True).distinct()
     class_types = ClassType.objects.values_list('enp_id', flat=True).order_by('enp_id')
-    mana_speeds = ManaSpeed.objects.annotate(nb_heroes=Count('heroes')).exclude(nb_heroes=0).values_list('enp_id', flat=True).order_by(F('order').asc(nulls_last=True))
-    heroes = Hero.objects.select_related('family', 'special_skill', 'class_type', 'mana_speed', 'costume_bonus', 'parent_hero', 'parent_hero__costume_bonus') \
+    mana_speeds = ManaSpeed.objects.annotate(nb_heroes=Count('heroes')).exclude(nb_heroes=0).values_list('enp_id', flat=True).order_by('max_mana')
+    heroes = Hero.objects.select_related('element', 'family', 'special_skill', 'class_type', 'mana_speed', 'costume_bonus', 'parent_hero', 'parent_hero__costume_bonus') \
                          .exclude(is_default_rider=True, can_be_received_date__gt=now_time) \
-                         .prefetch_related('costumes', 'parent_hero__costumes') \
-                         .order_by(F('can_be_received_date').desc(nulls_last=True), F('origin_id'), F('rarity_id').desc())
+                         .prefetch_related('costumes', 'parent_hero__costumes')
 
     # Filtering options
     if f_elements:
@@ -66,6 +65,7 @@ def index(request, f_elements=[], f_rarities=[], f_families=[], f_class_types=[]
             raise Http404("Invalid class filter")
         heroes = heroes.filter(class_type_id__in=f_class_types)
 
+    emblem_annotated = False
     if f_emblems:
         f_emblems = f_emblems.split(',')
         if len([b for b in f_emblems if b not in class_types]):
@@ -73,7 +73,8 @@ def index(request, f_elements=[], f_rarities=[], f_families=[], f_class_types=[]
         heroes = heroes.annotate(emblem_class_type_id=Case(
                                  When(parent_hero__isnull=False, then='parent_hero__class_type_id'),
                                  default='class_type_id'
-                        )).filter(emblem_class_type_id__in=f_emblems)
+                                 )).filter(emblem_class_type_id__in=f_emblems)
+        emblem_annotated = True
 
     if f_mana_speeds:
         f_mana_speeds = f_mana_speeds.split(',')
@@ -85,9 +86,29 @@ def index(request, f_elements=[], f_rarities=[], f_families=[], f_class_types=[]
         heroes = heroes.filter(parent_hero__isnull=(f_costume == 'N'))
 
     # Sorting options
+    order_by_args = []
     if f_sort:
-        f_sort = f_sort.split(',')
-        # TODO
+        f_sort = set(f_sort.split(','))
+        SORTING_OPTIONS = {
+            'element':    lambda: F('element__order').asc(nulls_last=True),
+            'rarity':     lambda: '-rarity_id',
+            'family':     lambda: F('family__order').asc(nulls_last=True),
+            'class':      lambda: F('class_type_id').asc(nulls_last=True),
+            'emblem':     lambda: F('emblem_class_type_id').asc(nulls_last=True),
+            'mana_speed': lambda: 'mana_speed__max_mana',
+        }
+        if f_sort - SORTING_OPTIONS.keys():
+            raise Http404("Invalid sorting options")
+        if 'emblem' in f_sort and not emblem_annotated:
+            heroes = heroes.annotate(emblem_class_type_id=Case(
+                                     When(parent_hero__isnull=False, then='parent_hero__class_type_id'),
+                                     default='class_type_id'))
+        for sorting_option in f_sort:
+            order_by_args.append(SORTING_OPTIONS[sorting_option]())
+
+    if not order_by_args: # Default sorting options
+        order_by_args = [F('can_be_received_date').desc(nulls_last=True), F('origin_id'), F('rarity_id').desc()]
+    heroes = heroes.order_by(*order_by_args)
 
     return render(request, 'enpluzz_heroes/index.html', {
         'elements': elements,
@@ -102,6 +123,7 @@ def index(request, f_elements=[], f_rarities=[], f_families=[], f_class_types=[]
         'f_emblems': f_emblems,
         'f_mana_speeds': f_mana_speeds,
         'f_costume': f_costume,
+        'f_sort': f_sort,
         'heroes': heroes,
     })
 

@@ -179,6 +179,6 @@ if __game_data_path.is_dir(): # It might not exist if no game data archive has b
     for __lang in ('English', 'French', 'Spanish', 'Italian', 'German', 'Japanese', 'Korean'):
         ENP_LANGUAGES[__lang] = ENPLangDict(__lang, __lang_path, __overrides_configuration)
     del __lang, __lang_path, __overrides_configuration
-    with open(__game_data_path / 'game_settings.json', encoding='UTF-8') as fd:
+    with open(__game_data_path / 'game_settings.json', mode='r', encoding='UTF-8') as fd:
         ENP_SETTINGS = json.load(fd)
 del __game_data_path
