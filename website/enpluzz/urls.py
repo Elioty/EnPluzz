@@ -40,4 +40,5 @@ urlpatterns = [
     path('items/', include('enpluzz_items.urls')),
     path('heroes/', include('enpluzz_heroes.urls')),
     path('troops/', include('enpluzz_troops.urls')),
+    path('dragons/', include('enpluzz_dragons.urls')),
 ] + debug_toolbar_urls()

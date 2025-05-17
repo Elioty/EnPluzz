@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'enpluzz_items.apps.EnpluzzItemsConfig',
     'enpluzz_heroes.apps.EnpluzzHeroesConfig',
     'enpluzz_troops.apps.EnpluzzTroopsConfig',
+    'enpluzz_dragons.apps.EnpluzzDragonsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -167,6 +168,9 @@ CLASSES_TO_IMPORT_FROM_GAME_CONFIGURATION = [
     'enpluzz_heroes.models.SpecialSkill',
     'enpluzz_heroes.models.Hero',
     'enpluzz_items.models.Item',
+    'enpluzz_dragons.models.DragonSpiritBonus',
+    'enpluzz_dragons.models.AssistSkill',
+    'enpluzz_dragons.models.Dragon',
 ]
 
 ENP_LANGUAGES = dict()

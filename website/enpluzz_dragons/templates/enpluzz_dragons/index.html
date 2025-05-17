@@ -1,0 +1,110 @@
+{% extends 'enpluzz_core/base.html' %}
+
+{% comment %}
+EnPluzz
+Copyright (C) 2025  Elioty <roadkiller.cl@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+{% endcomment %}
+
+{% load static %}
+{% load enpluzz_tags %}
+
+{% block page_body %}
+{% get_static_prefix as STATIC_PREFIX %}
+<div class="container">
+    <div class="row">
+        <div class="col-12 text-center" style="padding: 0.1rem">
+            <button class="btn btn-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSearchForm" aria-expanded="false" aria-controls="collapseSearchForm" style="width:100%">Search options</button>
+        </div>
+    </div>
+    <div class="collapse" id="collapseSearchForm">
+    <form action="{% url 'enpluzz_dragons:query_post' %}" method="POST">
+    {% csrf_token %}
+    Elements:
+    <div class="row">{% for element in elements %}
+        <div class="col-6 col-sm-6 col-md-3 col-lg-2 col-xl-2 text-center" style="padding: 0.1rem">
+            <input type="checkbox" class="btn-check" name="element_{{element}}" id="element_{{element}}" {% if element in f_elements %}checked {% endif %}autocomplete="off">
+            <label class=" btn btn-outline-light" for="element_{{element}}" style="width:100%"><img src="{{ STATIC_PREFIX }}game_assets/misc/herald_{% if element == 'All' %}rainbow{% else %}{{ element|lower }}{% endif %}.png" alt="" class="img-fluid" style="height: 1rem"/> {% if element == 'All' %}Rainbow{% else %}{% enpLang "element.plain" element|lower %}{% endif %}</label>
+        </div>
+    {% endfor %}</div>
+    Rarities:
+    <div class="row">{% for rarity in rarities %}
+        <div class="col-6 col-sm-6 col-md-3 col-lg-2 col-xl-2 text-center" style="padding: 0.1rem">
+            <input type="checkbox" class="btn-check" name="rarity_{{rarity}}" id="rarity_{{rarity}}" {% if rarity in f_rarities %}checked {% endif %}autocomplete="off">
+            <label class="btn btn-outline-light" for="rarity_{{rarity}}" style="width:100%">{% enpLang "rarity.lower" rarity|stringformat:"i" %}</label>
+        </div>
+    {% endfor %}</div>
+    Talent class dragon spirits:
+    <div class="row">{% for class_type in class_types %}
+        <div class="col-6 col-sm-6 col-md-3 col-lg-2 col-xl-2 text-center" style="padding: 0.1rem">
+            <input type="checkbox" class="btn-check" name="class_type_{{class_type}}" id="class_type_{{class_type}}" {% if class_type in f_class_types %}checked {% endif %}autocomplete="off">
+            <label class="btn btn-outline-light" for="class_type_{{class_type}}" style="width:100%"><img src="{{ STATIC_PREFIX }}game_assets/classes/{{ class_type|lower }}.png" alt="" class="img-fluid" style="height: 1rem"/> {% enpLang "hero.class" class_type|lower %}</label>
+        </div>
+    {% endfor %}</div>
+    Mana speeds:
+    <div class="row">{% for mana_speed in mana_speeds %}
+        <div class="col-6 col-sm-6 col-md-3 col-lg-2 col-xl-2 text-center" style="padding: 0.1rem">
+            <input type="checkbox" class="btn-check" name="mana_speed_{{mana_speed}}" id="mana_speed_{{mana_speed}}" {% if mana_speed in f_mana_speeds %}checked {% endif %}autocomplete="off">
+            <label class="btn btn-outline-light" for="mana_speed_{{mana_speed}}" style="width:100%">{% enpLang "manaspeed" mana_speed|lower %}</label>
+        </div>
+    {% endfor %}</div>
+    <br/>
+    <div class="row">
+        <div class="col-12 text-center" style="padding: 0.1rem">
+            <button type="submit" class="btn btn-outline-primary" style="width:100%">Submit</button>
+        </div>
+    </div>
+    </form>
+    </div>
+    <br/>
+    {% if dragons %}
+        <p>{{ dragons|length }} dragons</p>
+        <div class="row">
+            {% for dragon in dragons %}
+            <div class="col-6 col-sm-6 col-md-4 col-lg-4 col-xl-3 text-center p-0"><div class="card-box {{ dragon.element_id|lower }}">
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-lg-4 col-xl-4">
+                        <a href="{% url 'enpluzz_dragons:dragon' dragon.id %}"><img src="{{ STATIC_PREFIX }}game_assets/{{ dragon.sprite_name }}" alt="" class="img-fluid portrait {{ dragon.element_id|lower }}"/></a>
+                        <br/>
+                        {% with ''|center:dragon.rarity_id as range %}
+                        {% for _ in range %}<img src="{{ STATIC_PREFIX }}game_assets/misc/symbol_star_big_small.png" alt="" class="img-fluid" style="width: 15%"/>{% endfor %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-12 col-sm-12 col-lg-8 col-xl-8">
+                        <strong>
+                            {% enpLang dragon.name_lang_key %}
+                        </strong><br/>
+                        {% with dragon.stats as stats %}
+                        Power: {{ stats.3 }}<br/>
+                        Mana speed: {% enpLang dragon.mana_speed.name_lang_key %}<br/>
+                        <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_atk.png" alt="" width="12%"/> {{ stats.0 }}
+                        <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_defense.png" alt="" width="12%"/> {{ stats.1 }}
+                        <img src="{{ STATIC_PREFIX }}game_assets/misc/stat_health.png" alt="" width="12%"/> {{ stats.2 }}
+                        {% endwith %}
+                        <br/>
+                        {% if dragon.dragon_spirit_class_bonuses_id %}
+                        <img src="{{ STATIC_PREFIX }}game_assets/classes/{{ dragon.dragon_spirit_class_bonuses_id|lower }}.png" alt="" width="9%"/>
+                        {% enpLang "hero.class" dragon.dragon_spirit_class_bonuses_id|lower %}
+                        <br/>
+                        {% endif %}
+                    </div>
+                </div>
+            </div></div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No dragons are available.</p>
+    {% endif %}
+</div>
+{% endblock %}
