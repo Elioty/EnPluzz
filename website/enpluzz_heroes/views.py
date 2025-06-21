@@ -25,7 +25,7 @@ def index(request, f_elements=[], f_rarities=[], f_families=[], f_class_types=[]
     now_time = datetime.now(timezone.utc)
     elements = Element.objects.values_list('enp_id', flat=True).order_by(F('order').asc(nulls_last=True))
     rarities = Rarity.objects.values_list('enp_id', flat=True).order_by('-enp_id')
-    families = Family.objects.exclude(heroes__is_default_rider=True, heroes__can_be_received_date__gt=now_time) \
+    families = Family.objects.filter(Q(heroes__can_be_received_date__lte=now_time) | Q(heroes__can_be_received_date=None), heroes__is_default_rider=False) \
                              .annotate(nb_heroes=Count('heroes')).exclude(nb_heroes=0).order_by(F('order').asc(nulls_last=True)) \
                              .annotate(fam_id=Case(
                                  When(family_set__isnull=False, then='family_set_id'),
@@ -34,7 +34,7 @@ def index(request, f_elements=[], f_rarities=[], f_families=[], f_class_types=[]
     class_types = ClassType.objects.values_list('enp_id', flat=True).order_by('enp_id')
     mana_speeds = ManaSpeed.objects.annotate(nb_heroes=Count('heroes')).exclude(nb_heroes=0).values_list('enp_id', flat=True).order_by('max_mana')
     heroes = Hero.objects.select_related('element', 'family', 'special_skill', 'class_type', 'mana_speed', 'costume_bonus', 'parent_hero', 'parent_hero__costume_bonus') \
-                         .exclude(is_default_rider=True, can_be_received_date__gt=now_time) \
+                         .filter(Q(can_be_received_date__lte=now_time) | Q(can_be_received_date=None), is_default_rider=False) \
                          .prefetch_related('costumes', 'parent_hero__costumes')
 
     # Filtering options

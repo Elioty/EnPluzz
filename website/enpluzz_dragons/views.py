@@ -23,13 +23,12 @@ from enpluzz_heroes.models import ClassType
 from .models import *
 
 def index(request, f_elements=[], f_rarities=[], f_class_types=[], f_mana_speeds=[], f_sort=[]):
-    now_time = datetime.now(timezone.utc)
     elements = Element.objects.values_list('enp_id', flat=True).order_by(F('order').asc(nulls_last=True))
     rarities = Rarity.objects.values_list('enp_id', flat=True).order_by('-enp_id')
     class_types = ClassType.objects.values_list('enp_id', flat=True).order_by('enp_id')
     mana_speeds = ManaSpeed.objects.annotate(nb_dragons=Count('dragons')).exclude(nb_dragons=0).values_list('enp_id', flat=True).order_by('max_mana')
     dragons = Dragon.objects.select_related('element', 'special_skill', 'dragon_spirit_class_bonuses', 'dragon_spirit_element_bonuses', 'mana_speed') \
-                            .exclude(can_be_received_date__gt=now_time)
+                            .filter(Q(can_be_received_date__lte=datetime.now(timezone.utc)) | Q(can_be_received_date=None))
 
     # Filtering options
     if f_elements:
