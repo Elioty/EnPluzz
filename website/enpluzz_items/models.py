@@ -22,6 +22,9 @@ class ItemType(models.Model):
     enp_id = models.CharField(max_length=255, unique=True)
     order  = models.IntegerField(default=None, null=True)
 
+    class JsonMeta:
+        is_enumerate = True
+
     class Meta:
         indexes = [
             models.Index(fields=['enp_id']),
@@ -32,6 +35,9 @@ class ItemType(models.Model):
 
 class RefillType(models.Model):
     enp_id = models.CharField(max_length=255, unique=True)
+
+    class JsonMeta:
+        is_enumerate = True
 
     class Meta:
         indexes = [
@@ -44,6 +50,9 @@ class RefillType(models.Model):
 class TomeType(models.Model):
     enp_id = models.CharField(max_length=255, unique=True)
 
+    class JsonMeta:
+        is_enumerate = True
+
     class Meta:
         indexes = [
             models.Index(fields=['enp_id']),
@@ -54,9 +63,9 @@ class TomeType(models.Model):
 
 class Item(models.Model):
     enp_id     = CharFieldFromJson(json_field='id', max_length=255, unique=True)
-    item_type  = ForeignKeyFromJson(ItemType, json_field='itemType', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
-    game_modes = ManyToManyFieldFromJson(GameMode, json_field='gameModes', target_is_enumerate=True, through='ItemToGameMode')
-    rarity     = ForeignKeyFromJson(Rarity, json_field='rarity', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True, related_name='+')
+    item_type  = ForeignKeyFromJson(ItemType, json_field='itemType', to_field='enp_id', on_delete=models.PROTECT, null=True)
+    game_modes = ManyToManyFieldFromJson(GameMode, json_field='gameModes', through='ItemToGameMode')
+    rarity     = ForeignKeyFromJson(Rarity, json_field='rarity', to_field='enp_id', on_delete=models.PROTECT, null=True, related_name='+')
     gem_value  = IntegerFieldFromJson(json_field='gemValue', null=True)
     order      = models.IntegerField(default=None, null=True)
 
@@ -68,7 +77,7 @@ class Item(models.Model):
     parent_hero = ForeignKeyFromJson(Hero, json_field='parentHeroId', to_field='enp_id', on_delete=models.PROTECT, null=True, related_name='+')
 
     # When item_type is xxxRefill
-    refill_type   = ForeignKeyFromJson(RefillType, json_field='typeOfRefill', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
+    refill_type   = ForeignKeyFromJson(RefillType, json_field='typeOfRefill', to_field='enp_id', on_delete=models.PROTECT, null=True)
     # Ignore typeOfRefillAmount, it is always set to "Specific" when the actual amount is not None.
     refill_amount = IntegerFieldFromJson(json_field='refillAmount', null=True)
 
@@ -77,7 +86,7 @@ class Item(models.Model):
     given_item_amount = IntegerFieldFromJson(json_field='givenItemAmount', null=True)
 
     # When item_type is Tome
-    tome_type = ForeignKeyFromJson(TomeType, json_field='typeOfTome', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
+    tome_type = ForeignKeyFromJson(TomeType, json_field='typeOfTome', to_field='enp_id', on_delete=models.PROTECT, null=True)
     # For LevelUp tomes
     effect_amount             = IntegerFieldFromJson(json_field='effectAmount', null=True)
     increase_special_level    = BooleanFieldFromJson(json_field='increaseSpecialLevel', default=False)
@@ -90,7 +99,7 @@ class Item(models.Model):
     # When item_type is LotteryToken
     amount_for_summon    = IntegerFieldFromJson(json_field='amountForSummon', null=True)
     amount_for_10_summon = IntegerFieldFromJson(json_field='amountFor10Summon', null=True)
-    guaranteed_rarity    = ForeignKeyFromJson(Rarity, json_field='guaranteedRarity', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True, related_name='+')
+    guaranteed_rarity    = ForeignKeyFromJson(Rarity, json_field='guaranteedRarity', to_field='enp_id', on_delete=models.PROTECT, null=True, related_name='+')
 
     # When item_type is AscensionMaterial or ItemCrafting
     first_province         = IntegerFieldFromJson(json_field='firstProvince', null=True)

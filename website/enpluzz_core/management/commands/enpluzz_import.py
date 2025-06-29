@@ -15,10 +15,11 @@
 
 from django.core.management.base import BaseCommand, no_translations
 from django.conf import settings
+from django.db import models
 import zipfile
 import json
 from importlib import import_module
-from enpluzz_core.modelHelper import DateTimeFieldFromJson, ForeignKeyFromJson, ManyToManyFieldFromJson
+from enpluzz_core.modelHelper import *
 from datetime import datetime, timedelta
 from collections.abc import Callable
 
@@ -27,14 +28,14 @@ def _get_object_type(typename:str) -> type:
     module = import_module(typename[:last_dot_pos])
     return getattr(module, typename[last_dot_pos + 1:])
 
-def _update_field(obj:any, field:str, value:any, to_save:bool) -> bool:
+def _update_field_gen(obj:models.Model, field:str, value:any, to_save:bool) -> bool:
     if getattr(obj, field, None) != value:
         setattr(obj, field, value)
         return True
     else:
         return to_save
 
-def _update_datetime_field(obj:any, field:DateTimeFieldFromJson, value: any, to_save:bool) -> bool:
+def _update_datetime_field(obj:models.Model, field:DateTimeFieldFromJson, value:int|str|None, to_save:bool) -> bool:
     if value is None:
         value = field.get_default()
     elif isinstance(value, int):
@@ -43,34 +44,44 @@ def _update_datetime_field(obj:any, field:DateTimeFieldFromJson, value: any, to_
         value = datetime.fromisoformat(value)
     else:
         raise Exception('Unexpected data type for a DateTimeFieldFromJson')
-    return _update_field(obj, field.name, value, to_save)
+    return _update_field_gen(obj, field.name, value, to_save)
 
-def _update_foreignkey_field(obj:any, field:ForeignKeyFromJson, related_object_id: any, to_save:bool, write:Callable[[any, any, any], None]|None = None, second_pass:list|None = None) -> bool:
+def _update_foreignkey_field(obj:models.Model, field:ForeignKeyFromJson, related_object_id:any, to_save:bool, write:Callable[[any, any, any], None]|None = None, second_pass:list|None = None) -> bool:
     related_object_type = field.remote_field.model
-    def _get_default(field:ForeignKeyFromJson):
+    def _get_default():
         if field.has_default():
-            return related_object_type.objects.get(**{field.remote_field.field_name: field.get_default()})
+            try:
+                return related_object_type.objects.get(**{field.remote_field.field_name: field.get_default()})
+            except related_object_type.DoesNotExist:
+                if hasattr(related_object_type, 'JsonMeta') and getattr(related_object_type.JsonMeta, 'is_enumerate', False):
+                    related_object = related_object_type.objects.create(**{field.remote_field.field_name: field.get_default()})
+                    write and write('New enumerate {}({}).'.format(related_object_type.__name__, related_object_id))
+                    return related_object
+                else:
+                    raise
         else:
             return None
-    if related_object_id is not None:
+
+    if related_object_id is not None and (not isinstance(related_object_id, str) or related_object_id != ''):
         related_object_dict = {field.remote_field.field_name: related_object_id}
         try:
             related_object = related_object_type.objects.get(**related_object_dict)
         except related_object_type.DoesNotExist:
-            if field.target_is_enumerate:
+            if hasattr(related_object_type, 'JsonMeta') and getattr(related_object_type.JsonMeta, 'is_enumerate', False):
                 related_object = related_object_type.objects.create(**related_object_dict)
                 write and write('New enumerate {}({}).'.format(related_object_type.__name__, related_object_id))
             elif second_pass is not None:
                 # Memorise it for second pass
                 second_pass.append([obj, field, related_object_id])
-                related_object = _get_default(field)
+                related_object = _get_default()
             else:
                 raise
     else:
-        related_object = _get_default(field)
-    return _update_field(obj, field.name, related_object, to_save)
+        related_object = _get_default()
 
-def _update_manytomany_field(obj:any, field: ManyToManyFieldFromJson, related_object_ids: list[any], write:Callable[[any, any, any], None]|None = None) -> None:
+    return _update_field_gen(obj, field.name, related_object, to_save)
+
+def _update_manytomany_field(obj:models.Model, field: ManyToManyFieldFromJson, related_object_ids: list[any], write:Callable[[any, any, any], None]|None = None) -> None:
     source_object_type  = obj._meta.model
     related_object_type = field.remote_field.model
     related_object_list = []
@@ -81,7 +92,7 @@ def _update_manytomany_field(obj:any, field: ManyToManyFieldFromJson, related_ob
         connection_fields = [ connection_type._meta.get_field(field.remote_field.through_fields[0]), connection_type._meta.get_field(field.remote_field.through_fields[1]) ]
     else:
         for field2 in connection_type._meta.get_fields():
-            rel = getattr(field2, "remote_field", None)
+            rel = getattr(field2, 'remote_field', None)
             if rel:
                 if rel.model == related_object_type:
                     connection_fields[1] = field2
@@ -92,11 +103,14 @@ def _update_manytomany_field(obj:any, field: ManyToManyFieldFromJson, related_ob
         del field2, rel
 
     for related_object_id in related_object_ids:
+        if related_object_id is None or (isinstance(related_object_id, str) and related_object_id == ''):
+            continue
+
         related_object_dict = {connection_fields[1].remote_field.field_name: related_object_id}
         try:
             related_object = related_object_type.objects.get(**related_object_dict)
         except related_object_type.DoesNotExist:
-            if field.target_is_enumerate:
+            if hasattr(related_object_type, 'JsonMeta') and getattr(related_object_type.JsonMeta, 'is_enumerate', False):
                 related_object = related_object_type.objects.create(**related_object_dict)
                 write and write('New enumerate {}({}).'.format(related_object_type.__name__, related_object_id))
             else:
@@ -110,6 +124,45 @@ def _update_manytomany_field(obj:any, field: ManyToManyFieldFromJson, related_ob
             connection_object = connection_type.objects.get(**connection_object_dict)
         except connection_type.DoesNotExist:
             connection_type.objects.create(**connection_object_dict)
+    # TODO: also need to remove out-dated connections...
+
+def _update_onetoone_field(obj:models.Model, field:OneToOneFieldFromJson, value:any, to_save:bool, write:Callable[[any, any, any], None]|None = None, second_pass:list|None = None) -> bool:
+    if field.nested is False:
+        return _update_foreignkey_field(obj, field, value, to_save, write, second_pass)
+    else:
+        if not hasattr(obj, field.name):
+            nested_object = field.remote_field.model()
+            nested_object_to_save = True
+        else:
+            nested_object = getattr(obj, field.name)
+            nested_object_to_save = False
+        nested_object_to_save = _update_object(nested_object, value, nested_object_to_save, write, second_pass)
+        nested_object.save()
+        return _update_field_gen(obj, field.name, nested_object, to_save)
+
+def _update_field(obj:models.Model, field:models.Field, value:any, to_save:bool, write:Callable[[any, any, any], None]|None = None, second_pass:list|None = None) -> bool:
+    if isinstance(field, DateTimeFieldFromJson): # Date time case
+        to_save = _update_datetime_field(obj, field, value, to_save)
+    elif isinstance(field, OneToOneFieldFromJson): # Need to be checked before ForeignKeyFromJson because OneToOneFieldFromJson inherits from it
+        to_save = _update_onetoone_field(obj, field, value, to_save, write, second_pass)
+    elif isinstance(field, ForeignKeyFromJson):
+        to_save = _update_foreignkey_field(obj, field, value, to_save, write, second_pass)
+    elif isinstance(field, ManyToManyFieldFromJson):
+        if obj.pk is None:
+            # Memorise it for second pass, cannot make a many-to-many relationship yet
+            second_pass.append([obj, field, value if value is not None else []])
+        else:
+            _update_manytomany_field(obj, field, value if value is not None else [], write)
+    else: # General case
+        to_save = _update_field_gen(obj, field.name, value if value is not None else field.get_default(), to_save)
+    return to_save
+
+def _update_object(obj:models.Model, value:dict, to_save:bool, write:Callable[[any, any, any], None]|None = None, second_pass:list|None = None) -> bool:
+    object_type = type(obj)
+    for field in object_type._meta.get_fields():
+        if hasattr(field, 'json_field'):
+            to_save = _update_field(obj, field, value.get(field.json_field), to_save, write, second_pass)
+    return to_save
 
 class Command(BaseCommand):
     help = 'Import a set of configuration and assets.'
@@ -133,8 +186,18 @@ class Command(BaseCommand):
         for class_to_import in settings.CLASSES_TO_IMPORT_FROM_GAME_CONFIGURATION:
             options['verbose'] and self.stdout.write('Importing "{}" objects...'.format(class_to_import))
 
-            # TODO: optimize this by checking the new file checksum against the previous one to avoid updating/creating objects of this class when not necessary
             object_type = _get_object_type(class_to_import)
+            default_elements = getattr(object_type.JsonMeta, 'default_elements', ())
+            for element in default_elements:
+                try:
+                    obj = object_type.objects.get(**element)
+                except object_type.DoesNotExist:
+                    object_type.objects.create(**element)
+
+            if not hasattr(object_type.JsonMeta, 'source_file'):
+                continue
+
+            # TODO: optimize this by checking the new file checksum against the previous one to avoid updating/creating objects of this class when not necessary
             if not object_type.JsonMeta.source_file in json_files:
                 options['verbose'] and self.stdout.write('Loading "cached_configurations/' + object_type.JsonMeta.source_file + '"...')
                 with archive_file.open('cached_configurations/' + object_type.JsonMeta.source_file) as json_file:
@@ -154,34 +217,19 @@ class Command(BaseCommand):
                     new_object = True
                     to_save = True
 
-                for field in object_type._meta.get_fields():
-                    if hasattr(field, 'json_field'):
-                        if isinstance(field, DateTimeFieldFromJson): # Date time case
-                            to_save = _update_datetime_field(obj, field, element.get(field.json_field, None), to_save)
-                        elif isinstance(field, ForeignKeyFromJson):
-                            to_save = _update_foreignkey_field(obj, field, element.get(field.json_field, None), to_save, self.stdout.write if options['verbose'] else None, second_pass)
-                        elif isinstance(field, ManyToManyFieldFromJson):
-                            if new_object:
-                                # Memorise it for second pass, cannot make a many-to-many relationship yet
-                                second_pass.append([obj, field, element.get(field.json_field, [])])
-                                continue
-                            _update_manytomany_field(obj, field, element.get(field.json_field, []), self.stdout.write if options['verbose'] else None)
-                        else: # General case
-                            to_save = _update_field(obj, field.name, element.get(field.json_field, field.get_default()), to_save)
+                to_save = _update_object(obj, element, to_save, self.stdout.write if options['verbose'] else None, second_pass)
 
                 if to_save:
                     obj.save()
                     new_object and options['verbose'] and self.stdout.write('New object {}.'.format(element[object_type.JsonMeta.data_id_key]))
                     not new_object and options['verbose'] and self.stdout.write('Updated object {}.'.format(element[object_type.JsonMeta.data_id_key]))
 
-                reverse_relationships = getattr(object_type.JsonMeta, 'reverse_relationships', [])
-                if len(reverse_relationships):
-                    for reverse_relationship in reverse_relationships:
-                        to_object_type = _get_object_type(reverse_relationship['to'])
-                        for object_id_key in element[reverse_relationship['data_field']]:
-                            to_obj = to_object_type.objects.get(**{reverse_relationship['object_id_key']: object_id_key})
-                            if _update_field(to_obj, reverse_relationship['to_field'], obj, False):
-                                to_obj.save()
+                for reverse_relationship in getattr(object_type.JsonMeta, 'reverse_relationships', []):
+                    to_object_type = _get_object_type(reverse_relationship['to'])
+                    for object_id_key in element[reverse_relationship['data_field']]:
+                        to_obj = to_object_type.objects.get(**{reverse_relationship['object_id_key']: object_id_key})
+                        if _update_field_gen(to_obj, reverse_relationship['to_field'], obj, False):
+                            to_obj.save()
 
             self.stdout.write(self.style.SUCCESS('"{}" objects imported successfully.'.format(class_to_import)))
 
@@ -190,10 +238,7 @@ class Command(BaseCommand):
             for entry in second_pass:
                 to_save = False
                 obj, field, value = entry
-                if isinstance(field, ForeignKeyFromJson):
-                    to_save = _update_foreignkey_field(obj, field, value, to_save, self.stdout.write if options['verbose'] else None)
-                elif isinstance(field, ManyToManyFieldFromJson):
-                    _update_manytomany_field(obj, field, value, self.stdout.write if options['verbose'] else None)
+                to_save = _update_field(obj, field, value, to_save, self.stdout.write if options['verbose'] else None)
 
                 if to_save:
                     obj.save()
@@ -212,6 +257,7 @@ class Command(BaseCommand):
                 with archive_file.open('cached_configurations/' + source_file) as json_file:
                     json_files[source_file] = json.load(json_file)
 
+        # TODO: make this more generic via a setting
         other_settings['statsPerLevelConfiguration'] = json_files['battle.json']['battleConfig']['statsPerLevelConfiguration']
         other_settings['heroPowerBonusPerRarity'] = json_files['battle.json']['battleConfig']['heroPowerBonusPerRarity']
         other_settings['heroPowerAttackWeightPerMil'] = json_files['battle.json']['battleConfig']['heroPowerAttackWeightPerMil']

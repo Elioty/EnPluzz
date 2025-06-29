@@ -43,13 +43,16 @@ class JSONFieldFromJson(models.JSONField):
         self.json_field = json_field
 
 class ForeignKeyFromJson(models.ForeignKey):
-    def __init__(self, *args, json_field=None, target_is_enumerate=False, **kwargs):
+    def __init__(self, *args, json_field=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.json_field = json_field
-        self.target_is_enumerate = target_is_enumerate
 
 class ManyToManyFieldFromJson(models.ManyToManyField):
-    def __init__(self, *args, json_field=None, target_is_enumerate=False, **kwargs):
+    def __init__(self, *args, json_field=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.json_field = json_field
-        self.target_is_enumerate = target_is_enumerate
+
+class OneToOneFieldFromJson(ForeignKeyFromJson):
+    def __init__(self, *args, json_field=None, nested=False, **kwargs):
+        super().__init__(*args, json_field=json_field, **kwargs)
+        self.nested = nested

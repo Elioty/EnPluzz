@@ -23,6 +23,9 @@ class Origin(models.Model):
     enp_id = models.CharField(max_length=255, unique=True)
     order  = models.IntegerField(default=None, null=True)
 
+    class JsonMeta:
+        is_enumerate = True
+
     class Meta:
         indexes = [
             models.Index(fields=['enp_id']),
@@ -96,6 +99,9 @@ class Family(models.Model):
 
 class TrainerType(models.Model):
     enp_id = models.CharField(max_length=255, unique=True)
+
+    class JsonMeta:
+        is_enumerate = True
 
     class Meta:
         indexes = [
@@ -181,10 +187,10 @@ class AetherGifts(models.Model):
     # turnsIncrementPerLevel is always set to 0
 
     class JsonMeta:
-            source_file   = 'battle.json'
-            data_path     = 'battleConfig.aetherGifts'
-            data_id_key   = 'id'
-            object_id_key = 'enp_id'
+        source_file   = 'battle.json'
+        data_path     = 'battleConfig.aetherGifts'
+        data_id_key   = 'id'
+        object_id_key = 'enp_id'
 
     class Meta:
         indexes = [
@@ -194,10 +200,34 @@ class AetherGifts(models.Model):
     def name_lang_key(self) -> str:
         return 'limitbreak.gift.title.' + self.enp_id.lower()
 
+class DirectEffect(models.Model):
+    side_affected  = CharFieldFromJson(json_field='sideAffected', max_length=255)
+    type_of_target = CharFieldFromJson(json_field='typeOfTarget', max_length=255)
+    effect_type    = CharFieldFromJson(json_field='effectType', max_length=255, null=True)
+    power_multiplier_per_mil = IntegerFieldFromJson(json_field='powerMultiplierPerMil', default=0)
+    power_multiplier_increment_per_level_per_mil = IntegerFieldFromJson(json_field='powerMultiplierIncrementPerLevelPerMil', default=0)
+    has_fixed_power = BooleanFieldFromJson(json_field='hasFixedPower', default=False)
+    minor_power_multiplier_override_per_mil = IntegerFieldFromJson(json_field='minorPowerMultiplierOverridePerMil', default=0)
+    minor_power_multiplier_override_increment_per_level_per_mil = IntegerFieldFromJson(json_field='minorPowerMultiplierOverrideIncrementPerLevelPerMil', default=0)
+
+    def __str__(self) -> str:
+        return 'DirectEffect({}, {}, {}, {}, {}, {}, {}, {})'.format(
+            self.side_affected,
+            self.type_of_target,
+            self.effect_type,
+            self.power_multiplier_per_mil,
+            self.power_multiplier_increment_per_level_per_mil,
+            self.has_fixed_power,
+            self.minor_power_multiplier_override_per_mil,
+            self.minor_power_multiplier_override_increment_per_level_per_mil
+        )
+
 class SpecialSkill(models.Model):
     enp_id = CharFieldFromJson(json_field='id', max_length=255, unique=True)
     # TODO: many fields to add
+    direct_effect = OneToOneFieldFromJson(DirectEffect, json_field='directEffect', nested=True, default=DirectEffect, on_delete=models.PROTECT)
     max_level = IntegerFieldFromJson(json_field='maxLevel', default=0)
+    accuracy_modifier_per_mil = IntegerFieldFromJson(json_field='accuracyModifierPerMil', default=0)
 
     class JsonMeta:
             source_file   = 'specials.json'
@@ -210,15 +240,18 @@ class SpecialSkill(models.Model):
             models.Index(fields=['enp_id']),
         ]
 
+    def __str__(self) -> str:
+        return str(self.enp_id)
+
     def name_lang_key(self) -> str:
         return 'specials.name.' + self.enp_id.lower()
 
 class Hero(models.Model):
     enp_id       = CharFieldFromJson(json_field='id', max_length=255, unique=True)
-    element      = ForeignKeyFromJson(Element, json_field='element', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT)
-    rarity       = ForeignKeyFromJson(Rarity, json_field='rarity', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT)
-    origin       = ForeignKeyFromJson(Origin, json_field='origin', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
-    trainer_type = ForeignKeyFromJson(TrainerType, json_field='trainerType', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
+    element      = ForeignKeyFromJson(Element, json_field='element', to_field='enp_id', on_delete=models.PROTECT)
+    rarity       = ForeignKeyFromJson(Rarity, json_field='rarity', to_field='enp_id', on_delete=models.PROTECT)
+    origin       = ForeignKeyFromJson(Origin, json_field='origin', to_field='enp_id', on_delete=models.PROTECT, null=True)
+    trainer_type = ForeignKeyFromJson(TrainerType, json_field='trainerType', to_field='enp_id', on_delete=models.PROTECT, null=True)
 
     family = ForeignKeyFromJson(Family, json_field='family', to_field='enp_id', on_delete=models.PROTECT, null=True, related_name='heroes')
 

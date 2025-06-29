@@ -19,6 +19,17 @@ class Element(models.Model):
     enp_id = models.CharField(max_length=255, unique=True)
     order  = models.IntegerField(default=None, null=True)
 
+    class JsonMeta:
+        is_enumerate = True
+        default_elements = (
+            {'enp_id': 'Purple', 'order':  0},
+            {'enp_id': 'Yellow', 'order': 10},
+            {'enp_id': 'Blue',   'order': 20},
+            {'enp_id': 'Green',  'order': 30},
+            {'enp_id': 'Red',    'order': 40},
+            {'enp_id': 'All',    'order': 50},
+        )
+
     class Meta:
         indexes = [
             models.Index(fields=['enp_id']),
@@ -30,6 +41,16 @@ class Element(models.Model):
 class Rarity(models.Model):
     enp_id = models.IntegerField(unique=True)
     order  = models.IntegerField(default=None, null=True)
+
+    class JsonMeta:
+        is_enumerate = True
+        default_elements = (
+            {'enp_id': 1, 'order': 10},
+            {'enp_id': 2, 'order': 20},
+            {'enp_id': 3, 'order': 30},
+            {'enp_id': 4, 'order': 40},
+            {'enp_id': 5, 'order': 50},
+        )
 
     class Meta:
         indexes = [
@@ -44,6 +65,13 @@ class Rarity(models.Model):
 
 class GameMode(models.Model):
     enp_id = models.CharField(max_length=255, unique=True)
+
+    class JsonMeta:
+        is_enumerate = True
+        default_elements = (
+            {'enp_id': 'Classic'},
+            {'enp_id':  'Dragon'},
+        )
 
     class Meta:
         indexes = [

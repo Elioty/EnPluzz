@@ -23,6 +23,9 @@ from django.conf import settings
 class DragonSpiritBonusType(models.Model):
     enp_id = models.CharField(max_length=255, unique=True)
 
+    class JsonMeta:
+        is_enumerate = True
+
     class Meta:
         indexes = [
             models.Index(fields=['enp_id']),
@@ -33,7 +36,7 @@ class DragonSpiritBonusType(models.Model):
 
 class DragonSpiritBonus(models.Model):
     enp_id       = CharFieldFromJson(json_field='id', max_length=255, unique=True)
-    bonus_type   = ForeignKeyFromJson(DragonSpiritBonusType, json_field='bonusType', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT)
+    bonus_type   = ForeignKeyFromJson(DragonSpiritBonusType, json_field='bonusType', to_field='enp_id', on_delete=models.PROTECT)
 
     def _default_stat_bonuses() -> list:
         return [{'bonusLevels': []}] * 5
@@ -67,10 +70,10 @@ class AssistSkill(models.Model):
 
 class Dragon(models.Model):
     enp_id       = CharFieldFromJson(json_field='id', max_length=255, unique=True)
-    element      = ForeignKeyFromJson(Element, json_field='element', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT)
-    rarity       = ForeignKeyFromJson(Rarity, json_field='rarity', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT)
-    origin       = ForeignKeyFromJson(Origin, json_field='origin', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
-    trainer_type = ForeignKeyFromJson(TrainerType, json_field='trainerType', to_field='enp_id', target_is_enumerate=True, on_delete=models.PROTECT, null=True)
+    element      = ForeignKeyFromJson(Element, json_field='element', to_field='enp_id', on_delete=models.PROTECT)
+    rarity       = ForeignKeyFromJson(Rarity, json_field='rarity', to_field='enp_id', on_delete=models.PROTECT)
+    origin       = ForeignKeyFromJson(Origin, json_field='origin', to_field='enp_id', on_delete=models.PROTECT, null=True)
+    trainer_type = ForeignKeyFromJson(TrainerType, json_field='trainerType', to_field='enp_id', on_delete=models.PROTECT, null=True)
 
     mana_speed    = ForeignKeyFromJson(ManaSpeed, json_field='manaSpeedId', to_field='enp_id', on_delete=models.PROTECT, null=True, related_name='dragons')
 

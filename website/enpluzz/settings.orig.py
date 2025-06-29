@@ -159,6 +159,9 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CLASSES_TO_IMPORT_FROM_GAME_CONFIGURATION = [
+    'enpluzz_core.models.Element',
+    'enpluzz_core.models.Rarity',
+    'enpluzz_core.models.GameMode',
     'enpluzz_heroes.models.Family',
     'enpluzz_heroes.models.FamilySet',
     'enpluzz_heroes.models.ClassType',
